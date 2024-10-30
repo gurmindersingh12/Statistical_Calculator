@@ -37,13 +37,20 @@ def upload_file():
     results_list = []  # Create an empty list to store results
 
     # Loop through each trait column and calculate statistics
-    for column in data.columns[1:]:  # Exclude 'Genotype' column
-        trait_data = data[column]
+    for column in data.columns[1:]:  # Assuming the first column is 'Genotype' or similar
+        # Convert column to numeric, forcing non-numeric values to NaN, and drop NaN values
+        trait_data = pd.to_numeric(data[column], errors='coerce').dropna()
+        
+        if len(trait_data) == 0:
+            # Skip if no valid data points in the column
+            continue
+
+        # Calculate statistics
         mean_val = trait_data.mean()
         se_val = calculate_se(trait_data)
         min_val = trait_data.min()
         max_val = trait_data.max()
-        cv_val = (trait_data.std() / mean_val) * 100  # Coefficient of variation
+        cv_val = (trait_data.std() / mean_val) * 100 if mean_val != 0 else None  # Avoid division by zero
         kurt_val = kurtosis(trait_data, fisher=True)  # Fisher's definition of kurtosis
         lsd_val = calculate_lsd(trait_data)
         

@@ -12,3 +12,10 @@ This project is a statistical analysis tool built with Flask that allows users t
 2. Install the necessary packages:
    ```bash
    pip install -r requirements.txt
+
+
+## Usage
+1. Start the Flask app:
+   ```bash
+    python app.py
+2. Upload a CSV file through the web interface to receive your analysis results.

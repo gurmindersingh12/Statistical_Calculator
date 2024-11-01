@@ -23,7 +23,7 @@ def calculate_lsd_anova(data, trait, alpha=0.05):
     
     # LSD calculation
     lsd = t_critical * np.sqrt(2 * mse / data['TRT'].nunique())  # TRT is treatment count per ENV
-    return lsd
+    return lsd, mse, df_error, t_critical  # Return additional values for table
 
 # Function to calculate standard error
 def calculate_se(trait_data):
@@ -61,27 +61,34 @@ def upload_file():
                 # Skip if no valid data points in the column
                 continue
 
-            # Calculate statistics
+            # Calculate basic statistics
             mean_val = trait_data.mean()
+            sd_val = trait_data.std()
+            n_val = len(trait_data)
             se_val = calculate_se(trait_data)
             min_val = trait_data.min()
             max_val = trait_data.max()
-            cv_val = (trait_data.std() / mean_val) * 100 if mean_val != 0 else None  # Avoid division by zero
+            cv_val = (sd_val / mean_val) * 100 if mean_val != 0 else None  # Avoid division by zero
             kurt_val = kurtosis(trait_data, fisher=True)  # Fisher's definition of kurtosis
 
             # Calculate LSD using ANOVA
-            lsd_val = calculate_lsd_anova(env_data, column)
+            lsd_val, mse_val, df_error, t_critical = calculate_lsd_anova(env_data, column)
             
             # Append each result as a dictionary
             results_list.append({
                 'Environment': env,
                 'Trait': column,
                 'Mean': mean_val,
-                'Std Error': se_val,
+                'Standard Deviation (SD)': sd_val,
+                'Sample Size (n)': n_val,
+                'Standard Error (SE)': se_val,
                 'Min': min_val,
                 'Max': max_val,
                 'CV%': cv_val,
                 'Kurtosis': kurt_val,
+                'MSE': mse_val,
+                'Degrees of Freedom (df)': df_error,
+                't-Critical Value': t_critical,
                 'LSD (0.05)': lsd_val
             })
 
@@ -89,10 +96,10 @@ def upload_file():
     results = pd.DataFrame(results_list)
 
     # Save the results to a new CSV file in the static/uploads directory
-    results_file = os.path.join('static/uploads', 'statistical_results.csv')
+    results_file = os.path.join('static/uploads', 'detailed_statistical_results.csv')
     results.to_csv(results_file, index=False)
 
-    return redirect(url_for('download_file', filename='statistical_results.csv'))
+    return redirect(url_for('download_file', filename='detailed_statistical_results.csv'))
 
 # Route to download the resulting CSV file
 @app.route('/download/<filename>')
